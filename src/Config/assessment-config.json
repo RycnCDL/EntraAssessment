@@ -1,0 +1,326 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "description": "Entra Security Assessment Configuration",
+
+  "defaultSettings": {
+    "outputFormat": "HTML",
+    "outputPath": "./Reports",
+    "includePassedChecks": true,
+    "verboseLogging": false,
+    "parallelExecution": true,
+    "maxParallelJobs": 5
+  },
+
+  "riskLevels": {
+    "High": {
+      "description": "Critical security issue - remediate within 24 hours",
+      "slaHours": 24,
+      "color": "#dc3545"
+    },
+    "Medium": {
+      "description": "Important security issue - remediate within 7 days",
+      "slaDays": 7,
+      "color": "#ffc107"
+    },
+    "Low": {
+      "description": "Minor security issue - remediate when convenient",
+      "slaDays": 30,
+      "color": "#17a2b8"
+    },
+    "Info": {
+      "description": "Informational finding - no action required",
+      "slaDays": null,
+      "color": "#6c757d"
+    }
+  },
+
+  "categories": {
+    "PIM": {
+      "enabled": true,
+      "displayName": "Privileged Identity Management",
+      "description": "Checks for PIM configuration and privileged access management",
+      "requiredLicense": "Azure AD Premium P2",
+      "checks": {
+        "PIM-001": {
+          "enabled": true,
+          "title": "Keine permanenten privilegierten Zuweisungen",
+          "risk": "High",
+          "description": "Permanent privileged role assignments should be avoided. Use PIM for just-in-time access.",
+          "remediation": "Convert permanent assignments to eligible assignments in PIM.",
+          "reference": "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-configure",
+          "thresholds": {
+            "maxPermanentGlobalAdmins": 2,
+            "maxPermanentPrivilegedRoleAdmins": 1
+          }
+        },
+        "PIM-002": {
+          "enabled": true,
+          "title": "Approval für kritische Rollen erforderlich",
+          "risk": "High",
+          "description": "Critical roles should require approval for activation.",
+          "remediation": "Configure approval requirements in PIM role settings.",
+          "reference": "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-how-to-change-default-settings",
+          "criticalRoles": [
+            "Global Administrator",
+            "Privileged Role Administrator",
+            "Security Administrator"
+          ]
+        },
+        "PIM-003": {
+          "enabled": true,
+          "title": "Aktivierungsdauer maximal 8 Stunden",
+          "risk": "Medium",
+          "description": "Role activation duration should not exceed 8 hours.",
+          "remediation": "Reduce maximum activation duration in PIM role settings.",
+          "reference": "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-how-to-change-default-settings",
+          "thresholds": {
+            "maxActivationHours": 8
+          }
+        },
+        "PIM-004": {
+          "enabled": true,
+          "title": "Justification bei Aktivierung erforderlich",
+          "risk": "Medium",
+          "description": "Role activation should require justification.",
+          "remediation": "Enable 'Require justification on activation' in PIM role settings.",
+          "reference": "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-how-to-change-default-settings"
+        },
+        "PIM-005": {
+          "enabled": true,
+          "title": "MFA bei Aktivierung erforderlich",
+          "risk": "High",
+          "description": "MFA should be required for role activation.",
+          "remediation": "Enable 'Require Azure MFA on activation' in PIM role settings.",
+          "reference": "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-how-to-change-default-settings"
+        }
+      }
+    },
+
+    "RBAC": {
+      "enabled": true,
+      "displayName": "Role-Based Access Control",
+      "description": "Checks for RBAC configuration and role assignments",
+      "requiredLicense": "Azure AD Free",
+      "checks": {
+        "RBAC-001": {
+          "enabled": true,
+          "title": "Global Admins zwischen 2-5",
+          "risk": "High",
+          "description": "The number of Global Administrators should be between 2 and 5.",
+          "remediation": "Review Global Admin assignments and reduce to recommended count.",
+          "reference": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices",
+          "thresholds": {
+            "minGlobalAdmins": 2,
+            "maxGlobalAdmins": 5
+          }
+        },
+        "RBAC-002": {
+          "enabled": true,
+          "title": "Keine Gäste mit Admin-Rollen",
+          "risk": "High",
+          "description": "Guest users should not have administrative roles.",
+          "remediation": "Remove administrative role assignments from guest users.",
+          "reference": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices"
+        },
+        "RBAC-003": {
+          "enabled": true,
+          "title": "Keine Service Principals als Global Admin",
+          "risk": "Medium",
+          "description": "Service Principals should not have Global Administrator role.",
+          "remediation": "Assign more specific roles to Service Principals instead of Global Admin.",
+          "reference": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices"
+        },
+        "RBAC-004": {
+          "enabled": true,
+          "title": "Custom Roles dokumentiert",
+          "risk": "Low",
+          "description": "Custom roles should have descriptions documenting their purpose.",
+          "remediation": "Add descriptions to all custom roles.",
+          "reference": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/custom-overview"
+        },
+        "RBAC-005": {
+          "enabled": true,
+          "title": "Privilegierte Benutzer unter 5%",
+          "risk": "Medium",
+          "description": "Less than 5% of users should have privileged roles.",
+          "remediation": "Review privileged role assignments and reduce where possible.",
+          "reference": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices",
+          "thresholds": {
+            "maxPrivilegedUserPercentage": 5
+          }
+        }
+      }
+    },
+
+    "ConditionalAccess": {
+      "enabled": true,
+      "displayName": "Conditional Access",
+      "description": "Checks for Conditional Access policies",
+      "requiredLicense": "Azure AD Premium P1",
+      "checks": {
+        "CA-001": {
+          "enabled": true,
+          "title": "MFA für alle Benutzer",
+          "risk": "High",
+          "description": "MFA should be required for all users.",
+          "remediation": "Create a Conditional Access policy requiring MFA for all users.",
+          "reference": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-all-users-mfa"
+        },
+        "CA-002": {
+          "enabled": true,
+          "title": "Legacy Authentication blockiert",
+          "risk": "High",
+          "description": "Legacy authentication protocols should be blocked.",
+          "remediation": "Create a Conditional Access policy blocking legacy authentication.",
+          "reference": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-block-legacy"
+        },
+        "CA-003": {
+          "enabled": true,
+          "title": "Admin MFA Policy vorhanden",
+          "risk": "High",
+          "description": "Administrators should have a dedicated MFA policy.",
+          "remediation": "Create a Conditional Access policy requiring MFA for admin roles.",
+          "reference": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-admin-mfa"
+        },
+        "CA-004": {
+          "enabled": true,
+          "title": "Risky Sign-In Policy aktiv",
+          "risk": "Medium",
+          "description": "A policy should address risky sign-ins.",
+          "remediation": "Create a Conditional Access policy for risky sign-ins.",
+          "reference": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-risk"
+        }
+      }
+    },
+
+    "IdentityProtection": {
+      "enabled": true,
+      "displayName": "Identity Protection",
+      "description": "Checks for Identity Protection configuration",
+      "requiredLicense": "Azure AD Premium P2",
+      "checks": {
+        "IDP-001": {
+          "enabled": true,
+          "title": "Keine High Risk Users",
+          "risk": "High",
+          "description": "There should be no users with high risk level.",
+          "remediation": "Investigate and remediate high risk users in Identity Protection.",
+          "reference": "https://learn.microsoft.com/en-us/entra/id-protection/howto-identity-protection-remediate-unblock"
+        },
+        "IDP-002": {
+          "enabled": true,
+          "title": "Risk Detections werden überwacht",
+          "risk": "Medium",
+          "description": "Risk detections should be actively monitored.",
+          "remediation": "Configure alerts for risk detections and establish review process.",
+          "reference": "https://learn.microsoft.com/en-us/entra/id-protection/howto-identity-protection-investigate-risk"
+        }
+      }
+    },
+
+    "Copilot": {
+      "enabled": true,
+      "displayName": "Microsoft 365 Copilot",
+      "description": "Checks for Copilot security configuration",
+      "requiredLicense": "Microsoft 365 Copilot",
+      "checks": {
+        "COPILOT-001": {
+          "enabled": true,
+          "title": "Sensitivity Labels konfiguriert",
+          "risk": "High",
+          "description": "Sensitivity labels should be configured to protect data accessed by Copilot.",
+          "remediation": "Configure sensitivity labels in Microsoft Purview.",
+          "reference": "https://learn.microsoft.com/en-us/purview/sensitivity-labels"
+        },
+        "COPILOT-002": {
+          "enabled": true,
+          "title": "DLP Policies vorhanden",
+          "risk": "High",
+          "description": "DLP policies should be in place to prevent data leakage via Copilot.",
+          "remediation": "Configure DLP policies in Microsoft Purview.",
+          "reference": "https://learn.microsoft.com/en-us/purview/dlp-learn-about-dlp",
+          "status": "ManualReview",
+          "manualReviewReason": "DLP policies require Security & Compliance Center API"
+        },
+        "COPILOT-003": {
+          "enabled": true,
+          "title": "Audit Logging aktiviert",
+          "risk": "Medium",
+          "description": "Audit logging should be enabled for Copilot activities.",
+          "remediation": "Enable unified audit logging in Microsoft Purview.",
+          "reference": "https://learn.microsoft.com/en-us/purview/audit-log-enable-disable"
+        },
+        "COPILOT-004": {
+          "enabled": true,
+          "title": "Tenant Isolation konfiguriert",
+          "risk": "Medium",
+          "description": "Guest user access should be restricted appropriately.",
+          "remediation": "Review and configure guest access settings in External Identities.",
+          "reference": "https://learn.microsoft.com/en-us/entra/external-id/external-identities-overview"
+        }
+      }
+    }
+  },
+
+  "criticalRoles": [
+    {
+      "displayName": "Global Administrator",
+      "templateId": "62e90394-69f5-4237-9190-012177145e10"
+    },
+    {
+      "displayName": "Privileged Role Administrator",
+      "templateId": "e8611ab8-c189-46e8-94e1-60213ab1f814"
+    },
+    {
+      "displayName": "Security Administrator",
+      "templateId": "194ae4cb-b126-40b2-bd5b-6091b380977d"
+    },
+    {
+      "displayName": "Exchange Administrator",
+      "templateId": "29232cdf-9323-42fd-ade2-1d097af3e4de"
+    },
+    {
+      "displayName": "SharePoint Administrator",
+      "templateId": "f28a1f50-f6e7-4571-818b-6a12f2af6b6c"
+    },
+    {
+      "displayName": "User Administrator",
+      "templateId": "fe930be7-5e62-47db-91af-98c3a49a38b1"
+    },
+    {
+      "displayName": "Application Administrator",
+      "templateId": "9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3"
+    },
+    {
+      "displayName": "Cloud Application Administrator",
+      "templateId": "158c047a-c907-4556-b7ef-446551a6b5f7"
+    },
+    {
+      "displayName": "Authentication Administrator",
+      "templateId": "c4e39bd9-1100-46d3-8c65-fb160da0071f"
+    },
+    {
+      "displayName": "Privileged Authentication Administrator",
+      "templateId": "7be44c8a-adaf-4e2a-84d6-ab2649e08a13"
+    }
+  ],
+
+  "graphEndpoints": {
+    "directoryRoles": "/v1.0/directoryRoles",
+    "directoryRoleMembers": "/v1.0/directoryRoles/{id}/members",
+    "roleDefinitions": "/v1.0/roleManagement/directory/roleDefinitions",
+    "roleManagementPolicies": "/v1.0/policies/roleManagementPolicies",
+    "roleEligibilitySchedules": "/v1.0/roleManagement/directory/roleEligibilityScheduleInstances",
+    "roleAssignmentSchedules": "/v1.0/roleManagement/directory/roleAssignmentScheduleInstances",
+    "conditionalAccessPolicies": "/v1.0/identity/conditionalAccess/policies",
+    "riskyUsers": "/v1.0/identityProtection/riskyUsers",
+    "riskDetections": "/v1.0/identityProtection/riskDetections",
+    "sensitivityLabels": "/v1.0/informationProtection/policy/labels",
+    "auditLogs": "/v1.0/auditLogs/directoryAudits",
+    "signInLogs": "/v1.0/auditLogs/signIns",
+    "users": "/v1.0/users",
+    "organization": "/v1.0/organization",
+    "authorizationPolicy": "/v1.0/policies/authorizationPolicy"
+  }
+}
